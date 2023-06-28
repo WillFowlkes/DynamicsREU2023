@@ -4,7 +4,7 @@ import matplotlib
 
 
 def main():
-    print("REU project lessgo")
+    print("WIll is really stupid, adn this is a fact")
 
 
 if __name__ == '__main__':
