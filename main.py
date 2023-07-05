@@ -1,11 +1,18 @@
 import pandas
 import numpy
 import matplotlib
+import parameter
+
 
 
 def main():
-    print("WIll is really stupid, adn this is a fact")
 
+    parameters = parameter.Parameter()
+    parameters.setAll()
+    parameters.set("b")
+    print(parameters.get("b"))
+
+    print("printing results...")
 
 if __name__ == '__main__':
     main()
