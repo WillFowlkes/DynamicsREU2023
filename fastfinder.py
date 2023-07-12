@@ -209,7 +209,7 @@ def sensitivity_analysis(d, var, low, high):
             print(dep)
             p = get_payoffs(d, dep, a)
             print(p)
-            file.writerow([str(i),get_mean(dep), get_stddev(dep), get_mean(p), get_stddev(p)])
+            file.writerow([str(i),get_mean(dep),  get_mean(p), get_stddev(dep), get_stddev(p)])
 
 
 
@@ -228,7 +228,7 @@ def main():
     AmericanRobin = {"N": 5,
              "n": 4,
              "r": 9,
-             "c": 100,
+             "c": 4,
              "Rmin": 112,
              "Rmax": 202,
              "Tmax": 120,
