@@ -80,15 +80,15 @@ def get_departure_vector(d, a_vector):
         for i, _ in enumerate(departure_vector):
             if val > i:
                 departure_vector[i] += 1
-            if departure_vector[i] == d["Tmax"]:
-                departure_vector[i] = "n"
+            # if departure_vector[i] == d["Tmax"]:
+            #     departure_vector[i] = "n"
     return departure_vector
 
 def get_payoffs(d, departure_vector, a_vector):
     resource = calc_resource_vector(d, a_vector)
     payoff = [0]*d["n"]
     for player, time in enumerate(departure_vector):
-        if time != "n":
+        if time != d["Tmax"]:
             payoff[player] = calc_payoff(d, time, resource[time])
         else:
             r = get_Rmax_index(d, resource)
@@ -142,10 +142,10 @@ def test_cases():
              "f": 5}
     a2 = a_finder(case2)
     dept2 = get_departure_vector(case2, a2)
-    if dept2 == ["n", "n"]:
+    if dept2 == [3, 3]:
         print("PASS: Departure date")
     else:
-        print("FAIL: Departure date: expected [n, n], got " + str(dept2))
+        print("FAIL: Departure date: expected [3, 3], got " + str(dept2))
     payoffs2 = get_payoffs(case2, dept2, a2)
     if payoffs2 == [45, 45]:
         print("PASS: Payoffs")
@@ -198,10 +198,13 @@ def test_cases():
     else:
         print("FAIL: Payoffs: expected [56/9, 56/9], got " + str(payoffs4))
 
-def sensitivity_analysis(d, var, low, high):
-    with open('raw_data.csv', 'w') as file:
+def sensitivity_analysis(d, var, low, high, outfile):
+    with open(outfile, 'w') as file:
         file = csv.writer(file)
-        file.writerow([var, "mean departure", "standard deviation", "mean payoff", "standard deviation"])
+        file.writerow([var,"departure dates", "mean departure",
+                       "standard deviation departure", "payoffs",
+                       "mean payoff", "death rate",
+                       "standard deviation payoff"])
         for i in range(low, high):
             d[var] = i
             a = a_finder(d)
@@ -225,23 +228,53 @@ def main():
 
 
     #test_cases()
-    AmericanRobin = {"N": 5,
+    AmericanRobin = {"N": 1,
              "n": 4,
-             "r": 9,
-             "c": 4,
-             "Rmin": 112,
-             "Rmax": 202,
+             "r": 12/5,
+             "c": 2,
+             "Rmin": 40,
+             "Rmax": 136,
              "Tmax": 120,
-             "b": 1,
-             "k": 5,
-             "f": 6}
+             "b": 4,
+             "k": 0.5,
+             "f": 20}
     # ex = a_finder(example)
     # dep = get_departure_vector(example, ex)
     # payoffs = get_payoffs(example, dep, ex)
+    var = "N"
+    low = 1
+    high = 11
+    sensitivity_analysis(AmericanRobin, var, low, high, 'bigN.csv')
     var = "n"
     low = 1
     high = 10
-    sensitivity_analysis(AmericanRobin, var, low, high)
+    sensitivity_analysis(AmericanRobin, var, low, high, 'n.csv')
+    var = "c"
+    low = 1
+    high = 11
+    sensitivity_analysis(AmericanRobin, var, low, high, 'c.csv')
+    var = "r"
+    low = 1
+    high = 6
+    sensitivity_analysis(AmericanRobin, var, low, high, 'r.csv')
+    var = "Rmin"
+    low = 1
+    high = 81
+    sensitivity_analysis(AmericanRobin, var, low, high, 'Rmin.csv')
+    var = "b"
+    low = 1
+    high = 21
+    sensitivity_analysis(AmericanRobin, var, low, high, 'b.csv')
+    var = "k"
+    low = 0
+    high = 10
+    sensitivity_analysis(AmericanRobin, var, low, high, 'k.csv')
+    var = "Tmax"
+    low = 90
+    high = 241
+    sensitivity_analysis(AmericanRobin, var, low, high, 'Tmax.csv')
+
+
 
 if __name__ == '__main__':
     main()
