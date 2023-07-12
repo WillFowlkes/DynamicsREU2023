@@ -201,7 +201,7 @@ def test_cases():
 def sensitivity_analysis(d, var, low, high):
     with open('raw_data.csv', 'w') as file:
         file = csv.writer(file)
-        file.writerow([var, "mean departure", "mean payoff"])
+        file.writerow([var, "mean departure", "standard deviation", "mean payoff", "standard deviation"])
         for i in range(low, high):
             d[var] = i
             a = a_finder(d)
