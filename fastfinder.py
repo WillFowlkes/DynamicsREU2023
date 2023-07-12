@@ -98,11 +98,11 @@ def get_payoffs(d, departure_vector, a_vector):
 def calc_nodisperse_payoff(d, day):
     return (((d["Tmax"] - day ) / d["Tmax"]) * (d["f"]) + (
                                                         d["N"] - 1) * (d["f"]))
-def get_mean_payoff(payoff):
-    return sum(payoff)/len(payoff)
+def get_mean(data):
+    return sum(data)/len(data)
 
-def get_mean_departure(dep):
-    return sum(dep)/len(dep)
+def get_stddev(data):
+    return numpy.std(data)
 
 def test_cases():
     print("Test case 1")
@@ -209,7 +209,7 @@ def sensitivity_analysis(d, var, low, high):
             print(dep)
             p = get_payoffs(d, dep, a)
             print(p)
-            file.writerow([str(i),get_mean_departure(dep), get_mean_payoff(p)])
+            file.writerow([str(i),get_mean(dep), get_stddev(dep), get_mean(p), get_stddev(p)])
 
 
 
@@ -224,14 +224,14 @@ def main():
     # print("printing results...")
 
 
-    test_cases()
-    example = {"N": 12,
-             "n": 9,
+    #test_cases()
+    AmericanRobin = {"N": 5,
+             "n": 4,
              "r": 9,
              "c": 100,
              "Rmin": 112,
              "Rmax": 202,
-             "Tmax": 90,
+             "Tmax": 120,
              "b": 1,
              "k": 5,
              "f": 6}
@@ -241,7 +241,7 @@ def main():
     var = "n"
     low = 1
     high = 10
-    sensitivity_analysis(example, var, low, high)
+    sensitivity_analysis(AmericanRobin, var, low, high)
 
 if __name__ == '__main__':
     main()
