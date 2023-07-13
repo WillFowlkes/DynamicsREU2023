@@ -226,7 +226,23 @@ def sensitivity_analysis(d, var, low, high, outfile, increment=1):
                 d, dep, a), get_mean(p),
                             get_stddev(p), survival_rates, get_mean(survival_rates)])
 
-
+def individual_sensitivity_analysis(d, n, var, low, high, outfile, increment =1):
+    
+    with open(outfile, 'w') as file:
+        file = csv.writer(file)
+        for j in range(0, n):
+            file.writerow([var, "departure date", "payoff", "survival rate"])
+            for i in numpy.arange(low, high, increment):
+                d[var] = i
+                a = a_finder(d)
+                dep = get_departure_vector(d, a)
+                p = get_payoffs(d, dep, a)
+                resource = calc_resource_vector(d, a)
+                survival_rates = calc_survival_vector(d, dep, resource)
+                file.writerow([str(j),dep[j],p[j],survival_rates[j]])
+            
+                
+            
 
 
 
@@ -240,7 +256,7 @@ def main():
 
 
     #test_cases()
-    AmericanRobin = {"N": 1,
+    bird = {"N": 1,
              "n": 4,
              "r": 12/5,
              "c": 2,
@@ -256,43 +272,74 @@ def main():
     var = "N"
     low = 1
     high = 11
-    sensitivity_analysis(AmericanRobin, var, low, high, 'bigN.csv')
-    AmericanRobin["N"] = 1
+    sensitivity_analysis(bird, var, low, high, 'bigN.csv')
+    bird["N"] = 1
     var = "n"
     low = 1
     high = 10
-    sensitivity_analysis(AmericanRobin, var, low, high, 'n.csv')
-    AmericanRobin["n"] = 4
+    sensitivity_analysis(bird, var, low, high, 'n.csv')
+    bird["n"] = 4
     var = "c"
     low = 1
     high = 11
-    sensitivity_analysis(AmericanRobin, var, low, high, 'c.csv', 0.1)
-    AmericanRobin["c"] = 2
+    sensitivity_analysis(bird, var, low, high, 'c.csv', 0.1)
+    bird["c"] = 2
     var = "r"
     low = 1
     high = 6
-    sensitivity_analysis(AmericanRobin, var, low, high, 'r.csv', 0.1)
-    AmericanRobin["r"] = 12/5
+    sensitivity_analysis(bird, var, low, high, 'r.csv', 0.1)
+    bird["r"] = 12/5
     var = "Rmin"
     low = 1
     high = 81
-    sensitivity_analysis(AmericanRobin, var, low, high, 'Rmin.csv', 0.1)
-    AmericanRobin["Rmin"] = 40
+    sensitivity_analysis(bird, var, low, high, 'Rmin.csv', 0.1)
+    bird["Rmin"] = 40
     var = "b"
-    low = 1
+    low = -20
     high = 21
-    sensitivity_analysis(AmericanRobin, var, low, high, 'b.csv', 0.1)
-    AmericanRobin["b"] = 4
+    sensitivity_analysis(bird, var, low, high, 'b.csv', 0.1)
+    bird["b"] = 4
     var = "k"
     low = 0
     high = 40
-    sensitivity_analysis(AmericanRobin, var, low, high, 'k.csv', 0.1)
-    AmericanRobin["k"] = 0.5
+    sensitivity_analysis(bird, var, low, high, 'k.csv', 0.1)
+    bird["k"] = 0.5
     var = "Tmax"
     low = 90
     high = 241
-    sensitivity_analysis(AmericanRobin, var, low, high, 'Tmax.csv')
-    AmericanRobin["k"] = 120
+    sensitivity_analysis(bird, var, low, high, 'Tmax.csv')
+    bird["k"] = 120
+    bird["n"] = 4
+    var = "c"
+    low = 1
+    high = 11
+    individual_sensitivity_analysis(bird,bird["n"], var, low, high, 'c2.csv', 0.1)
+    bird["c"] = 2
+    var = "r"
+    low = 1
+    high = 6
+    individual_sensitivity_analysis(bird,bird["n"], var, low, high, 'r2.csv', 0.1)
+    bird["r"] = 12 / 5
+    var = "Rmin"
+    low = 1
+    high = 81
+    individual_sensitivity_analysis(bird,bird["n"], var, low, high, 'Rmin2.csv', 0.1)
+    bird["Rmin"] = 40
+    var = "b"
+    low = -20
+    high = 21
+    individual_sensitivity_analysis(bird,bird["n"], var, low, high, 'b2.csv', 0.1)
+    bird["b"] = 4
+    var = "k"
+    low = 0
+    high = 40
+    individual_sensitivity_analysis(bird,bird["n"], var, low, high, 'k2.csv', 0.1)
+    bird["k"] = 0.5
+    var = "Tmax"
+    low = 90
+    high = 241
+    individual_sensitivity_analysis(bird,bird["n"], var, low, high, 'Tmax.csv')
+    bird["k"] = 120
 
 
 
