@@ -208,14 +208,14 @@ def calc_survival_vector(d, dep, resource):
     return survival_rates
 
 
-def sensitivity_analysis(d, var, low, high, outfile):
+def sensitivity_analysis(d, var, low, high, outfile, increment=1):
     with open(outfile, 'w') as file:
         file = csv.writer(file)
         file.writerow([var,"departure dates", "mean departure",
                        "standard deviation departure", "payoffs",
                        "mean payoff", "standard deviation payoff",
                        "survival rates", "mean survival rate"])
-        for i in range(low, high):
+        for i in numpy.arange(low, high, increment):
             d[var] = i
             a = a_finder(d)
             dep = get_departure_vector(d, a)
@@ -279,8 +279,8 @@ def main():
     sensitivity_analysis(AmericanRobin, var, low, high, 'b.csv')
     var = "k"
     low = 0
-    high = 10
-    sensitivity_analysis(AmericanRobin, var, low, high, 'k.csv')
+    high = 2
+    sensitivity_analysis(AmericanRobin, var, low, high, 'k.csv', 0.1)
     var = "Tmax"
     low = 90
     high = 241
