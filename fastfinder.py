@@ -198,21 +198,33 @@ def test_cases():
     else:
         print("FAIL: Payoffs: expected [56/9, 56/9], got " + str(payoffs4))
 
+def calc_survival_vector(d, dep, resource):
+    survival_rates = []
+    for date in dep:
+        if date == d["Tmax"]:
+            survival_rates.append(1)
+        else:
+            survival_rates.append(calc_survival(d, resource[date]))
+    return survival_rates
+
+
 def sensitivity_analysis(d, var, low, high, outfile):
     with open(outfile, 'w') as file:
         file = csv.writer(file)
         file.writerow([var,"departure dates", "mean departure",
                        "standard deviation departure", "payoffs",
-                       "mean payoff", "death rate",
-                       "standard deviation payoff"])
+                       "mean payoff", "standard deviation payoff",
+                       "survival rates", "mean survival rate"])
         for i in range(low, high):
             d[var] = i
             a = a_finder(d)
             dep = get_departure_vector(d, a)
-            print(dep)
             p = get_payoffs(d, dep, a)
-            print(p)
-            file.writerow([str(i),get_mean(dep),  get_mean(p), get_stddev(dep), get_stddev(p)])
+            resource = calc_resource_vector(d, a)
+            survival_rates = calc_survival_vector(d, dep, resource)
+            file.writerow([str(i),get_departure_vector(d, a), get_mean(dep), get_stddev(dep), get_payoffs(
+                d, dep, a), get_mean(p),
+                            get_stddev(p), survival_rates, get_mean(survival_rates)])
 
 
 
