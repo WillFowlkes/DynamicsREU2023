@@ -333,7 +333,23 @@ def main():
 
     individual_sensitivity_analysis(bird,bird["n"], "Tmax", 90, 241, 'Tmax.csv')
     bird["k"] = 120
+    individual_sensitivity_analysis(bird,bird["n"], "c", 1, 11, 'c2.csv', 0.1)
+    bird["c"] = 2
 
+    individual_sensitivity_analysis(bird,bird["n"], "r", 1, 6, 'r2.csv', 0.1)
+    bird["r"] = 12 / 5
+
+    individual_sensitivity_analysis(bird,bird["n"], "Rmin", 1, 81, 'Rmin2.csv', 0.1)
+    bird["Rmin"] = 40
+
+    # individual_sensitivity_analysis(bird,bird["n"], "b", 0, 21, 'b2.csv', 0.1)
+    # bird["b"] = 4
+
+    individual_sensitivity_analysis(bird,bird["n"], "k", 0, 2, 'k2.csv', 0.1)
+    bird["k"] = 0.5
+
+    individual_sensitivity_analysis(bird,bird["n"], "Tmax", 90, 241, 'Tmax.csv')
+    bird["k"] = 120
 
 
 if __name__ == '__main__':
