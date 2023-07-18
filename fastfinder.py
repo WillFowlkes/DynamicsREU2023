@@ -50,7 +50,18 @@ def find_dispersal_date(d, resource):
         payoffs[i] = calc_payoff(d, i, r)
     j = get_Rmax_index(d, resource)
     payoffs.append(((d["Tmax"] - j) / d["Tmax"]) * (d["f"]) + (d["f"]) * (d["N"] - 1))
+    uniqueness_check(d, payoffs, max(payoffs))
     return payoffs.index(max(payoffs))
+
+def uniqueness_check(d, p, max):
+    maxima =0
+    for i in p:
+        if i == max:
+            maxima+=1
+    if maxima > 1:
+        print("BAD NEWS")
+        print(d)
+        print("BAD NEWS")
 
 def calc_payoff(d, day, resources):
     return calc_survival(d, resources) * \
