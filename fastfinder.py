@@ -1,16 +1,41 @@
+"""
+This Python File was written by Will Fowlkes (Vanderbilt University, class of 2025) as part of
+the 2023 IC Dynamics REU.  The purpose of fastfinder.py is to find the Nash Equilibrium of a finite
+sequential game faster than by using backwards induction. For a game of x players making y
+choices, the complexity is O(y^x).  The algorithm implemented here, nicknamed Fast Nash, takes this
+game to O(x*y), allowing for much greater analysis.
+
+Contact Information: whitman.w.fowlkes@vanderbilt.edu
+"""
+
+
 import math
 import csv
-import pandas
 import numpy
-import matplotlib
-# import parameter
 
 
-# START OF WILL CODE
+"""
+a_finder(d):
+
+:parameter d: the dictionary of parameters used in the game.
+
+The main loop of the algorithm.  This loops through the players in the game, and calculates the 
+optimal dispersal date for each player.  Due to a proof provided in the paper, this can be done 
+independently of other players as long as it is done in reverse player order.
+
+:returns a_vector:  This is a vector of length "Tmax" which gives the remaining number of 
+philopatric individuals at any given data.  This is used to calculate the resources of a 
+dispersing player.
+"""
 def a_finder(d):
+    #initialize data structures
     a_vector = [d["n"] for _ in range(d["Tmax"])]
     cols = d["n"]
+
+    # timing matrix gives a 2D visualization of when each individual is expected to disperse.
     timing_matrix = initialize(d)
+
+    #loop through players
     for i in range(cols):
         resource = calc_resource_vector(d, a_vector)
         date = find_dispersal_date(d, resource)
@@ -18,29 +43,85 @@ def a_finder(d):
     return a_vector
 
 
+"""
+calc_q(d, r)
+
+:parameter d: the dictionary of parameters used in the game.
+           r: the accumulated resources of an individual
+
+This function calculates q, the time spent in dispersal.
+
+:return q: the time spent in the dispersal process.
+"""
 def calc_q(d, r):
     return math.ceil(max(0, (d["Rmax"] - r) / d["c"]))
 
 
+"""
+calc_survival(d, r)
+
+:parameter d: the dictionary of parameters used in the game.
+           r: the accumulated resources of an individual
+
+This function calculates p_s, the probability that an individual survival dispersal, given an 
+accumulated resources r.
+
+:return p_s: the chance that an individual survives dispersal.
+"""
 def calc_survival(d, r):
     return math.pow((r / (r + d["k"])), calc_q(d, r))
 
 
+"""
+initialize(d)
+
+:parameter d: the dictionary of parameters used in the game.
+
+This function initialized the 2D timing matrix to all 0's.
+
+:return timing_matrix: the 2D representation of departure times.
+"""
 def initialize(d):
     return [[0 for _ in range(d["n"])] for __ in range(d["Tmax"])]
 
 
+"""
+calc_resource_vector(d, a_vector)
+
+:parameter d: the dictionary of parameters used in the game.
+           a_vector: the vector giving the number of remaining philopatric individuals at any time
+
+This function calculates the number of resources that an individual would have accumulated 
+at any given date of departure.
+
+:return resource: the accumulated resources of an individual at any point in time
+"""
 def calc_resource_vector(d, a_vector):
     time = d["Tmax"]
     resource = [0 for _ in range(time)]
+
+    # resources are split by the number of remaining philopatric individuals
     for i in range(1, time):
         if a_vector[i-1] != 0:
             resource[i] += (resource[i - 1] + d["r"] / a_vector[i-1])
+
+    # after adding in resource gain, we then increment all terms by "Rmin"
     for i in range( time):
         resource[i] += d["Rmin"]
     return resource
 
+"""
+find_dispersal_date(d, resource)
 
+:parameter d: the dictionary of parameters used in the game.
+           resource: the accumulated resources of an individual at any point in time
+
+This function calculates the payoff an individual would obtain at any point in time, and then 
+takes whichever date give the maximal payoff.  An error is thrown in there is more than one max 
+(see uniqueness_check())
+
+:return departure date: the date an individual begins dispersal.
+"""
 def find_dispersal_date(d, resource):
     time = d["Tmax"]
     payoffs = [0 for _ in range(time)]
@@ -48,11 +129,27 @@ def find_dispersal_date(d, resource):
     ## calculate dispersal payoff
     for i, r in enumerate(resource):
         payoffs[i] = calc_payoff(d, i, r)
+
+    # add in the payoff one obtains by not dispersing
     j = get_Rmax_index(d, resource)
     payoffs.append(((d["Tmax"] - j) / d["Tmax"]) * (d["f"]) + (d["f"]) * (d["N"] - 1))
+
+
     uniqueness_check(d, payoffs, max(payoffs))
     return payoffs.index(max(payoffs))
 
+
+"""
+uniqueness_check(d, p, max)
+
+:parameter d: the dictionary of parameters used in the game.
+           p: the list of all payoffs to an individual
+           max: the maximal payoff; what we want to check for duplicates of
+           
+
+This function checks whether the maximal payoff is unique, which is a condition for having a 
+mixed Nash Equilibrium.
+"""
 def uniqueness_check(d, p, max):
     maxima =0
     for i in p:
@@ -63,18 +160,58 @@ def uniqueness_check(d, p, max):
         print(d)
         print("BAD NEWS")
 
+
+"""
+calc_payoff(d, day, resources)
+
+:parameter d: the dictionary of parameters used in the game.
+           day: the day dispersal occurs on
+           resources: the accumulated resources on the dispersal date
+
+This function calculates the payoff obtained when dispersing on day "day" with "resources" 
+accumulated resources.
+
+returns payoff: the payoff obtained
+"""
 def calc_payoff(d, day, resources):
     return calc_survival(d, resources) * \
         (((d["Tmax"] - day - calc_q(d, resources)) / d["Tmax"]) * (d["f"]+ d["b"]) + (
                                                         d["N"] - 1) * (d["f"] + d["b"]))
 
+"""
+get_Rmax_index(d, resource)
 
+:parameter d: the dictionary of parameters used in the game.
+           resource: the accumulated resources on any given departure date.
+
+This function calculates the time at which a non-dispersing individual reaches Rmax.  This 
+corresponds the the z in the payoff formula provided in the paper.
+
+returns payoff: the day at which Rmax is reached
+"""
 def get_Rmax_index(d, resource):
     for i, j in enumerate(resource):
         if j >= d["Rmax"]:
             return i
+
+    # Rmax is always reached.  If we get to here, it must be on the last day.
     return len(resource)
 
+
+"""
+update_matrix(date, i, timing_matrix, a_vector)
+
+:parameter date: The departure date of player i
+           i: The player in questions; this corresponds to a column in timing_matrix
+           timing_matrix: the 2D representation of departure times.
+           a_vector: the vector giving the number of remaining philopatric individuals at any time
+
+This function updates the timing_matrix with player i's departure date. knowing player i's 
+behavior, the a_vector is updated.
+
+:returns timing_matrix: updated with player i's behavior
+         a_vector: updated with player i's behavior
+"""
 def update_matrix(date, i, timing_matrix, a_vector):
     for j, __ in enumerate(a_vector):
         if date <= j:
@@ -85,16 +222,44 @@ def update_matrix(date, i, timing_matrix, a_vector):
     return timing_matrix, a_vector
 
 
+"""
+get_departure_vector(d, a_vector)
+
+:parameter d: the dictionary of parameters used in the game.
+           a_vector: the remaining number of philopatric individuals at any given time, 
+           now updated for each player.
+
+Since a_vector is now fully formed and provides a complete picture of behavior in the game, 
+we use it to get a depature vector, a vector of length n which gives the departure date of each 
+player.  A depature date of "Tmax" means that an individual does not disperse.
+
+:returns departure_vector: a vector of each player's departure date.
+"""
 def get_departure_vector(d, a_vector):
     departure_vector = [0] * d["n"]
     for val in a_vector:
         for i, _ in enumerate(departure_vector):
             if val > i:
                 departure_vector[i] += 1
+            # optional if you would rather have no dispersal represented as "n" instead of
+            # the value of Tmax
             # if departure_vector[i] == d["Tmax"]:
             #     departure_vector[i] = "n"
     return departure_vector
 
+
+"""
+get_departure_vector(d, departure_vector, a_vector)
+
+:parameter d: the dictionary of parameters used in the game.
+           departure_vector: a vector of each player's departure date.
+           a_vector: the fully updated remaining number of philopatric individuals at any date
+           
+We use departure_vector and a_vector to calculate a payoff vector, which gives each player's best 
+payoff and thus gives the Nash Equilibrium payoffs for the whole game.
+
+:returns payoff: a vector of each player's payoff
+"""
 def get_payoffs(d, departure_vector, a_vector):
     resource = calc_resource_vector(d, a_vector)
     payoff = [0]*d["n"]
@@ -107,14 +272,31 @@ def get_payoffs(d, departure_vector, a_vector):
     return payoff
 
 def calc_nodisperse_payoff(d, day):
-    return (((d["Tmax"] - day ) / d["Tmax"]) * (d["f"]) + (
-                                                        d["N"] - 1) * (d["f"]))
+    return (((d["Tmax"] - day ) / d["Tmax"]) * (d["f"]) + (d["N"] - 1) * (d["f"]))
+
+
+## THE FOLLOWING FUNCTIONS ARE USED IN THE STATISTICAL ANALYSIS OR IN TESTING
+"""
+get_mean(data)
+
+returns the mean of a list of numerical data.
+"""
 def get_mean(data):
     return sum(data)/len(data)
 
+"""
+get_stddev(data)
+
+returns the standard deviation of a list of numerical data.
+"""
 def get_stddev(data):
     return numpy.std(data)
 
+"""
+test_cases()
+
+Checks if the program passes the test cases. This is used to check for correctness
+"""
 def test_cases():
     print("Test case 1")
     case1 = {"N": 2,
@@ -209,34 +391,78 @@ def test_cases():
     else:
         print("FAIL: Payoffs: expected [56/9, 56/9], got " + str(payoffs4))
 
-def calc_survival_vector(d, dep, resource):
+"""
+calc_survival_vector(d, dep, resource)
+
+:parameter d: the dictionary of parameters used in the game.
+           departure_vector: a vector of each player's departure date.
+           a_vector: the fully updated remaining number of philopatric individuals at any date 
+
+Calculates the survival rate of each individual.  Though survival is calculated when computing 
+payoffs, we provide a separate function for just survival for its own analysis.
+
+:return survival_rates: a vector of each players chance of survival.
+"""
+def calc_survival_vector(d, departure_vector, resource):
     survival_rates = []
-    for date in dep:
+    for date in departure_vector:
         if date == d["Tmax"]:
             survival_rates.append(1)
         else:
             survival_rates.append(calc_survival(d, resource[date]))
     return survival_rates
 
+"""
+sensitivity_analysis(d, var, low, high, outfile, increment=1)
 
+:parameter d: the dictionary of parameters used in the game.
+           var: the parameter we want to analyze.
+           low: the minimum value of var
+           high: the maximum value of var
+           outfile: the csv file we want data to be written to
+           increment: the amount we increase var by in analysis, defaulted to 1
+           
+Completes sensitivity analysis over a single variable.
+"""
 def sensitivity_analysis(d, var, low, high, outfile, increment=1):
     with open(outfile, 'w') as file:
         file = csv.writer(file)
+
+        #write the header row
         file.writerow([var,"departure dates", "mean departure",
                        "standard deviation departure", "payoffs",
                        "mean payoff", "standard deviation payoff",
                        "survival rates", "mean survival rate"])
+
         for i in numpy.arange(low, high, increment):
+            # set the parameter value then calculate the data
             d[var] = i
             a = a_finder(d)
             dep = get_departure_vector(d, a)
             p = get_payoffs(d, dep, a)
             resource = calc_resource_vector(d, a)
             survival_rates = calc_survival_vector(d, dep, resource)
+
+            # write the data to the outfile
             file.writerow([str(i),dep, get_mean(dep), get_stddev(dep), get_payoffs(
                 d, dep, a), get_mean(p),
                             get_stddev(p), survival_rates, get_mean(survival_rates)])
 
+
+"""
+individual_sensitivity_analysis(d, n, var, low, high, outfile, increment =1)
+
+:parameter d: the dictionary of parameters used in the game.
+           n: the number of players.
+           var: the parameter we want to analyze.
+           low: the minimum value of var
+           high: the maximum value of var
+           outfile: the csv file we want data to be written to
+           increment: the amount we increase var by in analysis, defaulted to 1
+
+Completes sensitivity analysis over a single variable for each player.  This does essentially 
+the same thing as sensitivity_analysis, but formats it by player first then variable value second.
+"""
 def individual_sensitivity_analysis(d, n, var, low, high, outfile, increment =1):
 
     with open(outfile, 'w') as file:
@@ -268,89 +494,21 @@ def individual_sensitivity_analysis(d, n, var, low, high, outfile, increment =1)
 
 
 def main():
-    # parameters = parameter.Parameter()
-    # parameters.setAll()
-    # parameters.set("b")
-    # print(parameters.get("b"))
-    #
-    # print("printing results...")
-
-
-    #test_cases()
-    bird = {"N": 1,
+    """
+    declare dictionary here:
+     example = {"N": 1,
              "n": 4,
              "r": 12/5,
              "c": 2,
              "Rmin": 40,
              "Rmax": 136,
              "Tmax": 120,
-             "b": 4,
+             "b": 0.8,
              "k": 0.5,
-             "f": 20}
-    # ex = a_finder(bird)
-    # dep = get_departure_vector(bird, ex)
-    # payoffs = get_payoffs(bird, dep, ex)
-
-    sensitivity_analysis(bird, "N", 1, 11, 'bigN.csv')
-    bird["N"] = 1
-
-    sensitivity_analysis(bird, "n", 1, 10, 'n.csv')
-    bird["n"] = 4
-
-    sensitivity_analysis(bird, "c", 1, 11, 'c.csv', 0.1)
-    bird["c"] = 2
-
-    sensitivity_analysis(bird, "r", 1, 6, 'r.csv', 0.1)
-    bird["r"] = 12/5
-
-    sensitivity_analysis(bird, "Rmin", 1, 81, 'Rmin.csv', 0.1)
-    bird["Rmin"] = 40
-
-    sensitivity_analysis(bird, "b", -20, 21, 'b.csv', 0.1)
-    bird["b"] = 4
-
-    sensitivity_analysis(bird, "k", 0, 2, 'k.csv', 0.1)
-    bird["k"] = 0.5
-
-    sensitivity_analysis(bird, "Tmax", 90, 241, 'Tmax.csv')
-    bird["k"] = 120
-    bird["n"] = 4
-
-    individual_sensitivity_analysis(bird,bird["n"], "c", 1, 11, 'c2.csv', 0.1)
-    bird["c"] = 2
-
-    individual_sensitivity_analysis(bird,bird["n"], "r", 1, 6, 'r2.csv', 0.1)
-    bird["r"] = 12 / 5
-
-    individual_sensitivity_analysis(bird,bird["n"], "Rmin", 1, 81, 'Rmin2.csv', 0.1)
-    bird["Rmin"] = 40
-
-    individual_sensitivity_analysis(bird,bird["n"], "b", -20, 21, 'b2.csv', 0.1)
-    bird["b"] = 4
-
-    individual_sensitivity_analysis(bird,bird["n"], "k", 0, 2, 'k2.csv', 0.1)
-    bird["k"] = 0.5
-
-    individual_sensitivity_analysis(bird,bird["n"], "Tmax", 90, 241, 'Tmax.csv')
-    bird["k"] = 120
-    individual_sensitivity_analysis(bird,bird["n"], "c", 1, 11, 'c2.csv', 0.1)
-    bird["c"] = 2
-
-    individual_sensitivity_analysis(bird,bird["n"], "r", 1, 6, 'r2.csv', 0.1)
-    bird["r"] = 12 / 5
-
-    individual_sensitivity_analysis(bird,bird["n"], "Rmin", 1, 81, 'Rmin2.csv', 0.1)
-    bird["Rmin"] = 40
-
-    # individual_sensitivity_analysis(bird,bird["n"], "b", 0, 21, 'b2.csv', 0.1)
-    # bird["b"] = 4
-
-    individual_sensitivity_analysis(bird,bird["n"], "k", 0, 2, 'k2.csv', 0.1)
-    bird["k"] = 0.5
-
-    individual_sensitivity_analysis(bird,bird["n"], "Tmax", 90, 241, 'Tmax.csv')
-    bird["k"] = 120
-
+             "f": 4}
+     call functions here:
+     var = a_finder(example)
+    """
 
 if __name__ == '__main__':
     main()
