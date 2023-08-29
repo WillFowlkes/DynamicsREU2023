@@ -243,13 +243,21 @@ def solve(d):
     d['Tmax'] -= 1
     return tree
 
-baseD = {"N": 2,
-         "n": 3,
-         "r": 12 / 5,
-         "c": 2,
-         "Rmin": 40,
-         "Rmax": 40 + 136,
-         "Tmax": 1, 
-         "b": 4,
-         "k": .8,
-         "f": 3}
+
+
+def main():
+    baseD = {"N": 2,
+             "n": 3,
+             "r": 12 / 5,
+             "c": 2,
+             "Rmin": 40,
+             "Rmax": 40 + 136,
+             "Tmax": 1,
+             "b": 4,
+             "k": .8,
+             "f": 3}
+    print(solve(baseD))
+
+
+if __name__ == '__main__':
+    main()
