@@ -1,5 +1,5 @@
 import math
-from fastfinder import *
+from fastnash import *
 import treelib as tl
 
 # nodeData holds the player, day, and states and efrs vector for decision nodes
