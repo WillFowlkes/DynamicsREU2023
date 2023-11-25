@@ -1,3 +1,4 @@
+#Author: Thomas Narramore, Western Colorado class fo 2025.
 import math
 from fastnash import *
 import treelib as tl
